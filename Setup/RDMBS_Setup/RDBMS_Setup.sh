@@ -33,12 +33,43 @@ install_mysql() {
     sudo apt-get install -y mysql-server
 
     # Start MySQL server
-    sudo systemctl start mysql
-
-    # Enable MySQL to start on boot
-    sudo systemctl enable mysql
-
-    # Set the MySQl root password and secure the installation
-    sudo mysql -e "ALTER USER 'root'@'localhost' IDENTIFIERD WITH 'mysql_native_password' BY '$MYSQL_ROOTPASSWORD'; FLUSH PRIVILEGES;"
+    sudo service mysql start
 }
 
+# Function to create MySQL database and user
+create_db_user_and_database() {
+    echo "Creating MySQL user and database..."
+
+    # Execute SQL commands to create user and database
+    mysql -u root <<EOF
+    CREATE DATABASE IF NOT EXISTS $DB_NAME;
+
+    CREATE USER IF NOT EXISTS '$DB_USER'@'localhost' IDENTIFIED BY '$DB_PASS';
+
+    GRANT ALL PRIVILEGES ON $DB_NAME.* TO '$DB_USER'@'localhost';
+    FLUSH PRIVILEGES;
+EOF
+    echo "Created DB user and DB successfully."
+}
+
+# Function to execute DDL and DML SQL files
+execute_sql_files() {
+    echo "Executing SQL files..."
+
+    # Loop through each .sql file and execute it
+    for sql_file in $(ls *.sql); do
+        if [ -f "$sql_file" ]; then
+            echo "Executing "$sql_file""
+            mysql -u "$DB_USER" -p"$DB_PASS" "$DB_NAME" < "$sql_file"
+        fi
+    done 
+}
+
+# Main script execution
+install_mysql
+create_db_user_and_database
+execute_sql_files
+
+echo "MySQL installation is complete."
+
+exit 0
