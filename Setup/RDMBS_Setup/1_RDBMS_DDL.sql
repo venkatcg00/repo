@@ -69,6 +69,9 @@ CREATE TABLE IF NOT EXISTS CSD_DM(
 );
 
 ALTER TABLE
+    CSD_DM ADD UNIQUE csd_dm_source_system_identifier_unique(SOURCE_SYSTEM_IDENTIFIER);
+
+ALTER TABLE
     CSD_DM ADD INDEX csd_dm_source_id_index(SOURCE_ID);
 
 ALTER TABLE
