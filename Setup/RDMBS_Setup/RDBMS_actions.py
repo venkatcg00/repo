@@ -4,7 +4,12 @@ import mysql.connector
 from mysql.connector import Error
 
 class MySQLDatabase:
-    def __init__(self, host: str, , user: str, password: str, database: str):
+    def __init__(self,
+                 host: str,
+                 user: str, 
+                 password: str, 
+                 database: str
+                ):
         """
         Initialize the MySQLDatabase class with connection parameters.
         """
@@ -38,9 +43,20 @@ class MySQLDatabase:
             self.connection.close()
             print(f"Disconnected from MySQL database: {self.database}")
         
-    def execute_query(self, action: str, table: str, data: dict = None, where: dict = None, columns: list = None, ssi_key: str = None, ssi_value: str = None):
+    def execute_query(self,
+                      sql_action: str,
+                      table: str,
+                      column_data: dict = None,
+                      select_columns: list = None,
+                      where: str = ""
+                      )
         """
         Execute DML/DQL queries based on the action specified
 
-        :param action: Type of SQL action ('SELECT', 'INSERT', 'UPDATE', 'DELETE')
+        :param action: Type of SQL action ('SELECT' or 'UPSERT').
+        :param table: The table to perform the action on.
+        :param column_data: A dictionary of column names and values for UPSERT operations.
+        :param select_columns: A list of columns to retreive for SELECT queries.
+        :param where: A string representing the WHERE clause for filtering.
+
         """
