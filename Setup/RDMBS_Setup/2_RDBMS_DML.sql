@@ -1,15 +1,15 @@
 INSERT INTO CSD_SOURCES (SOURCE_NAME, SOURCE_TYPE, HOST_NAME, PORT, DATABASE_NAME, USER_NAME, PASSWORD, FILE_PATH, API_ENDPOINT, SECURITY_PROTOCOL, AUTH_METHOD, CONNECTION_PARAMETERS, CREATED_TIME, UPDATED_TIME, DESCRIPTION, ACTIVE_FLAG) 
-VALUES ('AMAZON', 'JSON', NULL, NULL, NULL, NULL, NULL, '\Setup\JSON_Setup\Amazon_csd_data.json', NULL, NULL, NULL, '{"format":"json","schema":"customer_support"}', NOW(), '2999-12-31 00:00:00', 'Amazon Customer support JSON data.', 'Y');
+VALUES ('AMAZON', 'JSON', NULL, NULL, NULL, NULL, NULL, '\Setup\JSON_DB_Setup\Amazon_csd_data.json', NULL, NULL, NULL, '{"format":"json","schema":"customer_support"}', NOW(), '2999-12-31 00:00:00', 'Amazon Customer support JSON data.', 'Y');
 
 COMMIT;
 
 INSERT INTO CSD_SOURCES (SOURCE_NAME, SOURCE_TYPE, HOST_NAME, PORT, DATABASE_NAME, USER_NAME, PASSWORD, FILE_PATH, API_ENDPOINT, SECURITY_PROTOCOL, AUTH_METHOD, CONNECTION_PARAMETERS, CREATED_TIME, UPDATED_TIME, DESCRIPTION, ACTIVE_FLAG) 
-VALUES ('UBER', 'XML', NULL, NULL, NULL, NULL, NULL, '\Setup\XML_Setup\Uber_csd_data.xml', NULL, NULL, NULL, '{"schema":"customer_support","namsepace":"CSD"}', NOW(), '2999-12-31 00:00:00', 'Uber Customer support XML data.', 'Y');
+VALUES ('UBER', 'XML', NULL, NULL, NULL, NULL, NULL, '\Setup\XML_DB_Setup\Uber_csd_data.xml', NULL, NULL, NULL, '{"schema":"customer_support","namsepace":"CSD"}', NOW(), '2999-12-31 00:00:00', 'Uber Customer support XML data.', 'Y');
 
 COMMIT;
 
 INSERT INTO CSD_SOURCES (SOURCE_NAME, SOURCE_TYPE, HOST_NAME, PORT, DATABASE_NAME, USER_NAME, PASSWORD, FILE_PATH, API_ENDPOINT, SECURITY_PROTOCOL, AUTH_METHOD, CONNECTION_PARAMETERS, CREATED_TIME, UPDATED_TIME, DESCRIPTION, ACTIVE_FLAG) 
-VALUES ('AT&T', 'CSV', NULL, NULL, NULL, NULL, NULL, '\Setup\CSV_Setup\ATT_csd_data.xml', NULL, NULL, NULL, '{"delimiter":"|","header":true}', NOW(), '2999-12-31 00:00:00', 'AT&T Customer support CSV data.', 'Y');
+VALUES ('AT&T', 'CSV', NULL, NULL, NULL, NULL, NULL, '\Setup\CSV_DB_Setup\ATT_csd_data.csv', NULL, NULL, NULL, '{"delimiter":"|","header":true}', NOW(), '2999-12-31 00:00:00', 'AT&T Customer support CSV data.', 'Y');
 
 COMMIT;
 
