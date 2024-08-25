@@ -1,20 +1,20 @@
 INSERT INTO CSD_SOURCES (
-    SOURCE_NAME, SOURCE_TYPE, HOST_NAME, PORT, DATABASE_NAME, USER_NAME, PASSWORD, 
+    SOURCE_NAME, SOURCE_FILE_TYPE, HOST_NAME, PORT, DATABASE_NAME, USER_NAME, PASSWORD, 
     FILE_PATH, API_ENDPOINT, SECURITY_PROTOCOL, AUTH_METHOD, CONNECTION_PARAMETERS, 
-    LAST_LOADED_RECORD_ID, DESCRIPTION, ACTIVE_FLAG, START_DATE, END_DATE
+    LAST_LOADED_RECORD_ID, SOURCE_TYPE, DESCRIPTION, ACTIVE_FLAG, START_DATE, END_DATE
 ) 
 VALUES 
 ('AMAZON', 'JSON', NULL, NULL, NULL, NULL, NULL, 
  '\Setup\JSON_DB_Setup\Amazon_csd_data.json', NULL, NULL, NULL, '{"format":"json","schema":"customer_support"}', 
- NULL, 'Amazon Customer support JSON data.', 'Y', NOW(), '2999-12-31 00:00:00'),
+ NULL, 'CDC_RECORD_ID', 'Amazon Customer support JSON data.', 'Y', NOW(), '2999-12-31 00:00:00'),
 
 ('UBER', 'XML', NULL, NULL, NULL, NULL, NULL, 
  '\Setup\XML_DB_Setup\Uber_csd_data.xml', NULL, NULL, NULL, '{"schema":"customer_support","namespace":"CSD"}', 
- NULL, 'Uber Customer support XML data.', 'Y', NOW(), '2999-12-31 00:00:00'),
+ NULL, 'FULL_REFRESH_TIME_STAMP', 'Uber Customer support XML data.', 'Y', NOW(), '2999-12-31 00:00:00'),
 
 ('AT&T', 'CSV', NULL, NULL, NULL, NULL, NULL, 
  '\Setup\CSV_DB_Setup\ATT_csd_data.csv', NULL, NULL, NULL, '{"delimiter":",","header":true}', 
- NULL, 'AT&T Customer support CSV data.', 'Y', NOW(), '2999-12-31 00:00:00'),
+ NULL, 'FULL_REFRESH', 'AT&T Customer support CSV data.', 'Y', NOW(), '2999-12-31 00:00:00'),
 
 ('CSD_DASHBOARD', 'RDBMS', '192.168.1.10', '5432', 'csd_database', 'csd_user', 'Csd_password@123', 
  NULL, NULL, 'SSL', 'Basic', '{"schema":"public"}', 
