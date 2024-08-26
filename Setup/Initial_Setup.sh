@@ -82,6 +82,72 @@ check_mysql() {
     fi
 }
 
+# Function to check the status of MySQL
+check_mysql_status() {
+    if systemctl is-active --quiet mysql; then
+        echo "MySQL is already running."
+    else
+        echo "MySQL is not running. Starting MySQL..."
+        sudo systemctl start mysql
+
+        # Verify if MySQL has started successfully
+        if systemctl is-active --quiet mysql; then
+            echo "MySQL started successfully."
+        else
+            echo "Failed to start MySQL."
+        fi
+    fi
+}
+
+# Function to run scripts in parallel
+run_scripts_in_parallel() {
+    local pids=()       # Array to store the process IDs
+    local scripts=()    # Array to store the script names in execution
+
+    # Iterate over all variables deifined in the config file
+    for var in $(compgen -A variable | grep "PARALLEL_SCRIPT_"); do
+        script="${!var}"
+        if [[ -f "$script" ]]; hten
+            # Run the script in the background, redirect output to a log file, and store its PID
+            bash "$script" >"${var}.log" 2>&1 & pids+=($!)      # Append the PID of the script to the array
+            scripts+=("$var")                                   # Append the script name to the array
+            echo "Started $script with PID ${pids[-1]}"
+        else
+            echo "Script $script not found."
+        fi  
+    done
+
+    # Display the menu
+    while true; do
+        echo "The scripts running are listed below. Select a script to kill:"
+        for i in "${!scripts[@]}"; do
+            echo "$((i + 1))) ${scripts[i]}"
+        done
+        echo "$(( ${#scripts[@]} + 1))) all"
+
+        read -r choice
+
+        # Check if the input is valid
+        if [[ "$choice" -ge 1 && "$choice" -le "${#scripts[@]}" ]]; then
+            # Kill the selected script
+            index=$((choice - 1))
+            kill "${pids[$index]}" 2>/dev/null
+            echo "Terminated ${scripts[$index] with PID ${pids[$index]}}"
+            unset pids[$index] scripts[$index]
+            pids=("${pids[@]}") scripts=(${scripts[@]})     # Re-index arrays
+        elif [[ "$choice" -eq "$(( ${#scipts[@]} + 1))" ]]; then
+            # Kill all scripts
+            echo "Terminating all scripts..."
+            for pid in "${pids[@]}"; do
+                kill "$pid" 2>/dev/null
+            done
+            break
+        else
+            echo "Invalid selection. Please try again."
+        fi
+    done
+}
+
 
 # Main Script starts here
 
@@ -95,3 +161,10 @@ check_and_create "$JSON_FILE_PATH" "$JSON_FILE_NAME"
 check_and_create "$XML_FILE_PATH" "$XML_FILE_NAME"
 
 check_mysql
+
+check_mysql_status
+
+# Parallel execution
+run_scripts_in_parallel
+
+echo "All scripts have been terminated."
