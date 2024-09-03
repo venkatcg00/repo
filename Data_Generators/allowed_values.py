@@ -36,9 +36,9 @@ def fetch_allowed_values(cursor: MySQLCursor,
     Returns:
     List[str]: A list of allowed values from the specified column.
     """
-    query = f"SELECT DISTINCT {column_name} FROM {table_name} WHERE SOURCE_ID = (SELECT SOURCE_ID FROM CSD_SOURCES WHERE SOURCE_NAME = {source_name})"
+    query = f"SELECT DISTINCT {column_name} FROM {table_name} WHERE SOURCE_ID = (SELECT SOURCE_ID FROM CSD_SOURCES WHERE UPPER(SOURCE_NAME) = UPPER({source_name}))"
     cursor.execute(query)
-    return [row[0] for row in cursor.fetchall()]
+    return [str(row[0]) for row in cursor.fetchall()]
 
 def close_database_connection(connection: MySQLConnection, cursor: MySQLCursor) -> None:
     """

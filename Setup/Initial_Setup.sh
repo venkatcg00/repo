@@ -14,6 +14,7 @@ install_python() {
         sudo apt-get update
         sudo apt-get install -y python3
         echo "Python has been installed."
+    fi
 }
 
 # Function to check and install missing python libraries
@@ -111,7 +112,7 @@ run_scripts_in_parallel() {
             # Run the script in the background, redirect output to a log file, and store its PID
             bash "$script" >"${var}.log" 2>&1 & pids+=($!)      # Append the PID of the script to the array
             scripts+=("$var")                                   # Append the script name to the array
-            echo "Started $script with PID ${pids[-1]}"
+            echo "Started $script with PID ${pids[-1]}."
         else
             echo "Script $script not found."
         fi  
