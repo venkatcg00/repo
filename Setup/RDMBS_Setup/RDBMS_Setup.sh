@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Define the configuration file.
-CONFIG_FILE="RDBMS_Parameters.cfg"
+CONFIG_FILE="../Initial_setup_parameters.cfg"
 
 # Check if the configuration file exists.
 if [ ! -f "$CONFIG_FILE" ]; then
