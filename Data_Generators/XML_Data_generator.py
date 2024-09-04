@@ -58,7 +58,7 @@ def generate_random_record(
     ET.SubElement(record, "AFTER_CONTACT_WORK_TIME").text  = str(timedelta(seconds = random.randint(10,600)))
     ET.SubElement(record, "INCIDENT_STATUS").text = random.choice(["Resolved", "Pending Resolution", "Pending Customer Update", "Work In Progress", "Transferred to another Queue"])
     ET.SubElement(record, "1ST_CONTACT_SOLVE").text  = random.choice(["TRUE", "FALSE"])
-    ET.SubElement(record, "SUPPORT_RATING").text = str(random.randint(1, 5))
+    ET.SubElement(record, "SUPPORT_RATING").text = str(random.choice([random.randint(1, 5)]))
     ET.SubElement(record, "TIME_STAMP").text = str(datetime.now().strftime("%Y/%m%d %H:%M:%S"))
 
     return record
