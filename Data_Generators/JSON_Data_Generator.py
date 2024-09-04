@@ -30,7 +30,7 @@ def get_max_record_id(json_file_path: str) -> int:
 def generate_random_record(
         record_id: int,
         support_categories: List[str],
-        agent_psuedo_names: List[str],
+        agent_pseudo_names: List[str],
         customer_types: List[str]
 ) -> Dict[str, Optional[Any]]:
     """
@@ -39,7 +39,7 @@ def generate_random_record(
     Parameters:
     record_id (int): The unique record ID.
     support_categories (List[str]): List of allowed support_categories.
-    agent_psuedo_names (List[str]): List of allowed agent psuedo names.
+    agent_pseudo_names (List[str]): List of allowed agent pseudo names.
     customer_types (List[str]): List of allowed customer types.
 
     Returns:
@@ -52,8 +52,8 @@ def generate_random_record(
         "RECORD_ID" : record_id,
         "INTERACTION_ID" : random.choice([record_id, random.randint(1, record_id)]),
         "SUPPORT_CATEGORY" : random.choice(support_categories),
-        "AGENT_PSUEDO_NAME" : random.choice(agent_psuedo_names),
-        "CONTACT_DATE" : (datetime.now() - timedelta(days = random.randint(0, 1000))).strftime('%d%m%Y %H:%M:%S'),
+        "AGENT_pseudo_NAME" : random.choice(agent_pseudo_names),
+        "CONTACT_DATE" : (datetime.now() - timedelta(days = random.randint(0, 1000))).strftime('%d/%m/%Y %H:%M:%S'),
         "INTERACTION_STATUS" : random.choice(["Completed", "Dropped", "Transferred"]),
         "INTERACTION_TYPE" : random.choice(["Call", "Chat"]),
         "TYPE_OF_CUSTOMER" : random.choice(customer_types),
@@ -68,7 +68,7 @@ def generate_random_record(
 
 def generate_and_update_records(
         support_categories: List[str],
-        agent_psuedo_names: List[str],
+        agent_pseudo_names: List[str],
         customer_types: List[str],
         start_record_id: int,
         num_records: int
@@ -78,7 +78,7 @@ def generate_and_update_records(
 
     Parameters:
     support_categories (List[str]): List of allowed support categories.
-    agent_psuedo_names (List[str]): List of allowed agent psuedo names.
+    agent_pseudo_names (List[str]): List of allowed agent pseudo names.
     customer_types (List[str]): List of allowed customer types.
     start_record_id (int): The starting RECORD_ID for the new records.
     num_records (int): The number of new records to generate.
@@ -90,11 +90,11 @@ def generate_and_update_records(
 
     for i in range(num_records):
         record_id = start_record_id + 1
-        new_record = generate_random_record(record_id, support_categories, agent_psuedo_names, customer_types)
+        new_record = generate_random_record(record_id, support_categories, agent_pseudo_names, customer_types)
 
         # Introduce NULL values to some fields (up to 10% of data)
         if random.random() < 0.1:
-            key_to_nullify = random.choice(["SUPPORT_CATEGORY", "AGENT_PSUEDO_NAME", "CONTACT_DATE", "INTERACTION_STATUS", "INTERACTION_TYPE", "TYPE_OF_CUSTOMER", "INTERACTION_DURATION", "TOTAL_TIME", "STATUS_OF_CUSTOMER_INCIDENT", "SOLUTION_TYPE", "RATING"])
+            key_to_nullify = random.choice(["SUPPORT_CATEGORY", "AGENT_pseudo_NAME", "CONTACT_DATE", "INTERACTION_STATUS", "INTERACTION_TYPE", "TYPE_OF_CUSTOMER", "INTERACTION_DURATION", "TOTAL_TIME", "STATUS_OF_CUSTOMER_INCIDENT", "SOLUTION_TYPE", "RATING"])
             new_record[key_to_nullify] = None
         
         records.append(new_record)
@@ -102,7 +102,7 @@ def generate_and_update_records(
         # Introduce updtes to existinf records (up to 25% of data)
         if random.random() < 0.25 and record_id > 1:
             update_record_id = random.randint(1, record_id)
-            update_record = generate_random_record(update_record_id, support_categories, agent_psuedo_names, customer_types)
+            update_record = generate_random_record(update_record_id, support_categories, agent_pseudo_names, customer_types)
 
         records.append(update_record)
 
@@ -152,9 +152,9 @@ def main() -> None:
     connection, cursor = connect_to_database(db_config)
 
     # Fetch allowed values from the database
-    support_categories = fetch_allowed_values(cursor, 'CSD_SUPPORT_AREAS', 'AMAZON', 'SUPPORT_AREA_NAME')
-    agent_psuedo_names = fetch_allowed_values(cursor, 'CSD_AGENTS', 'AMAZON', 'PSUEDO_CODE')
-    customer_types = fetch_allowed_values(cursor, 'CSD_CUSTOMER_TYPES', 'AMAZON', 'CUSTOMER_TYPE_NAME')
+    support_categories: List[str] = fetch_allowed_values(cursor, 'CSD_SUPPORT_AREAS', 'AMAZON', 'SUPPORT_AREA_NAME')
+    agent_pseudo_names: List[str] = fetch_allowed_values(cursor, 'CSD_AGENTS', 'AMAZON', 'PSEUDO_CODE')
+    customer_types: List[str] = fetch_allowed_values(cursor, 'CSD_CUSTOMER_TYPES', 'AMAZON', 'CUSTOMER_TYPE_NAME')
 
     # Close the database connection
     close_database_connection(connection, cursor)
@@ -162,7 +162,7 @@ def main() -> None:
     # Get JSON file path and name from config
     json_file_path: str = config.get('DEFAULT', 'JSON_FILE_PATH')
     json_file_name: str = config.get('DEFAULT', 'JSON_FILE_NAME')
-    full_json_path: str = f"{json_file_path}/{json_file_name}"
+    full_json_path: str = os.path.join(json_file_path, json_file_name)
 
     # Fetch the maximum RECORD_ID from the existinf JSON file
     max_record_id: int = get_max_record_id(full_json_path)
@@ -172,7 +172,7 @@ def main() -> None:
         num_records: int = random.randint(1, 1000)
 
         # Generate new and possibly updated records
-        records: List[Dict[str, Optional[Any]]] = generate_and_update_records(support_categories, agent_psuedo_names, customer_types, max_record_id, num_records)
+        records: List[Dict[str, Optional[Any]]] = generate_and_update_records(support_categories, agent_pseudo_names, customer_types, max_record_id, num_records)
 
         # Write the records to the JSON ile
         write_json_data(full_json_path, records)
@@ -180,7 +180,7 @@ def main() -> None:
         # Update max_record_id for the next iteration
         max_record_id += len([record for record in records if record["RECORD_ID"] > max_record_id])
 
-        # Sleep for a random interval (ledd than 50 seconds)
+        # Sleep for a random interval
         time.sleep(random.uniform(1, 50))
 
 if __name__ == "__main__":
