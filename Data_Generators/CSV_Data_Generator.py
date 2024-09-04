@@ -89,4 +89,94 @@ def generate_and_update_records(
         new_record = generate_random_recod(record_id, support_categories, agent_pseudo_names, customer_types)
 
         # Introduce NULL values to some fields
+        if random.random() < 0.1:
+            key_to_nullify = random.choice(random.randint(1,12))
+            new_record[key_to_nullify] = None
         
+        records.append(new_record)
+
+        # Introduce updated to data
+        if random.random() < 0.25 and record_id > 1:
+            update_record_id = random.randint(1, record_id)
+            updated_record = generate_random_recod(update_record_id, support_categories, agent_pseudo_names, customer_types)
+
+        records.append(updated_record)
+
+    return records
+
+
+def write_csv_data(csv_file_path: str, data: List[List[str]]) -> None:
+    """
+    Write the generated data to a CSV file.
+
+    Parameters:
+    csv_file_path (str): The file path where the CSV data should be saved.
+    data (List[List[str]]): The data to be written to the CSV file.
+    """
+    try:
+        with open(csv_file_path, 'r+') as csv_file:
+            csv_file.write("|".join(data))
+    except FileNotFoundError:
+        with open(csv_file_path, 'w') as csv_file:
+            csv_file.write('TICKET_IDENTIFIER|SUPPORT_CATEGORY|AGENT_NAME|DATE_OF_CALL|CALL_STATUS|CALL_TYPE|TYPE_OF_CUSTOMER|DURATION|WORK_TIME|TICKET_STATUS|RESOLVED_IN_FIRST_CONTACT|RESOLUTION_CATEGORY|RATING')
+            csv_file.write("|".join(data))
+
+
+def main() -> None:
+    # Get the directory where the current Python script is located
+    current_directory = os.path.dirname(os.path.abspath(__file__))
+
+    # Navigate to the parent directory
+    project_directory = os.path.dirname(current_directory)
+
+    # Construct the path to the parameter file
+    cfg_file_path = os.path.join(project_directory, 'Setup', 'Initial_setup_parameters.cfg')
+    
+    config = configparser.ConfigParser()
+    config.read(cfg_file_path)
+
+    # MySQL database configuration
+    db_config = {
+        'user' : config.get('DEFAULT', 'DB_USER'),
+        'password' : config.get('DEFAULT', 'DB_PASS'),
+        'host' : 'localhost',
+        'database' : config.get('DEFAULT', 'DB_NAME')
+    }
+
+    # Connect to the database
+    connection, cursor = connect_to_database(db_config)
+
+    # Fetch allowed values from the database
+    support_categories: List[str] = fetch_allowed_values(cursor, 'CSD_SUPPORT_AREAS', 'AT&T', 'SUPPORT_AREA_NAME')
+    agent_pseudo_names: List[str] = fetch_allowed_values(cursor, 'CSD_AGENTS', 'AT&T', 'PSEUDO_CODE')
+    customer_types: List[str] = fetch_allowed_values(cursor, 'CSD_CUSTOMER_TYPES', 'AT&T', 'CUSTOMER_TYPE_NAME')
+
+    # Close the database connection
+    close_database_connection(connection, cursor)
+
+    # Get CAV file path and name from config
+    csv_file_path: str = config.get('DEFAULT', 'CSV_FILE_PATH')
+    csv_file_name: str = config.get('DEFAULT', 'CSV_FILE_NAME')
+    full_csv_path: str = os.path.join(csv_file_path, csv_file_name)
+
+    # Fetch the maximum RECORD_ID from the existinf CSV file
+    max_record_id: int = get_max_record_id(full_csv_path)
+
+    while True:
+        # Generate a random number of records
+        num_records: int = random.randint(1, 1000)
+
+        # Generate new and possibly updated records
+        records: List[List[str]] = generate_and_update_records(support_categories, agent_pseudo_names, customer_types, max_record_id, num_records)
+
+        # Write the records to the CSV ile
+        write_csv_data(full_csv_path, records)
+
+        # Update max_record_id for the next iteration
+        max_record_id += len([record for record in records if int(record[0]) > max_record_id])
+
+        # Sleep for a random interval
+        time.sleep(random.uniform(1, 50))
+
+if __name__ == "__main__":
+    main()
