@@ -16,7 +16,6 @@ create_parameters() {
     # Get the absolute path of the repository
     current_directory="$(pwd)"
     extracted_path="${current_directory%%$repo_name*}$repo_name/"
-    echo "$extracted_path"
 
     # Create an output file for the absolute paths
     local output_file="Setup_parameters.txt" 
@@ -45,14 +44,15 @@ create_parameters() {
     echo "Parameter file has created with name $output_file"
 }
 
+
 # Function to check if Python has been installed.
 install_python() {
-    if command -v python3 &> /dev/null; then
+    if command -v python3 > /dev/null 2>&1; then
         echo "Python is already installed."
     else
         echo "Python is not installed. Installing Python."
-        sudo apt-get update
-        sudo apt-get install -y python3
+        sudo apt-get update > /dev/null 2>&1
+        sudo apt-get install -y python3 > /dev/null 2>&1
         echo "Python has been installed."
     fi
 }
@@ -67,9 +67,9 @@ install_libraries() {
     fi
 
     while IFS= read -r library; do
-        if ! python3 -c "import $library" &> /dev/null; then
+        if ! python3 -c "import $library" > /dev/null 2>&1; then
             echo "Installing $library..."
-            pip install $library
+            pip install $library > /dev/null 2>&1
         else
             echo "$library is already installed."
         fi
@@ -115,23 +115,14 @@ check_and_create_file() {
 }
 
 
-# Function to check if MySQL is installed
-check_mysql_status() {
-    pgrep mysqld > /dev/null 2>&1
-    if [ $? -eq 0 ]; then
-        echo "MySQL is not running."
-        return 1
-    fi
-}
-
 # Function to check if MySQL is installed.
-check_mysql_installed() {
-    if command -v mysql >/dev/null 2&>1; then
+check_mysql_installation() {
+    if command -v mysql > /dev/null 2>&1 ; then
         echo "MySQL is installed."
         return 0
     else
         echo "MySQL is not installed. Installing MySQL..."
-        apt-get install -y mysql-server
+        apt-get install -y mysql-server > /dev/null 2>&1
 
         if [ $? -ne 0 ]; then
             echo "Error: Failed to install MySQL."
@@ -143,9 +134,23 @@ check_mysql_installed() {
     fi
 }
 
+
 # Function to check if MySQL is running
 check_mysql_running() {
     # Check if the MySQL process is running
+    if service mysql status | grep -q "stopped"; then
+        echo "MySQL is not running, Starting MySQL..."
+        service mysql start
+
+        # Check if MySQL startd successfully
+        if service mysql status | grep -q "running"; then
+            echo "MySQL has started successfully."
+        else
+            echo "ErrorL: Failed to start MySQL."
+        fi
+    else
+        echo "MySQL is running"
+    fi
 }
 
 
@@ -160,7 +165,7 @@ run_scripts_in_parallel() {
         if [[ -f "$script" ]]; then
             # Run the script in the background, redirect output to a log file, and store its PID
             python3 "$script" >"${var}.log" 2>&1 & pids+=($!)      # Append the PID of the script to the array
-            scripts+=("$var")                                   # Append the script name to the array
+            scripts+=("$script")                                   # Append the script name to the array
             echo "Started $script with PID ${pids[-1]}."
         else
             echo "Script $script not found."
@@ -173,7 +178,10 @@ run_scripts_in_parallel() {
         for i in "${!scripts[@]}"; do
             echo "$((i + 1))) ${scripts[i]}"
         done
-        echo "$(( ${#scripts[@]} + 1))) all"
+        scripts_count=${#scripts[@]}
+        increment=1
+        total_count=$(($scripts_count + $increment))
+        echo "$total_count) all"
 
         read -r choice
 
@@ -182,10 +190,10 @@ run_scripts_in_parallel() {
             # Kill the selected script
             index=$((choice - 1))
             kill "${pids[$index]}" 2>/dev/null
-            echo "Terminated ${scripts[$index] with PID ${pids[$index]}}"
+            echo "Terminated ${scripts[$index]} with PID ${pids[$index]}}"
             unset pids[$index] scripts[$index]
             pids=("${pids[@]}") scripts=(${scripts[@]})     # Re-index arrays
-        elif [[ "$choice" -eq "$(( ${#scipts[@]} + 1))" ]]; then
+        elif [[ "$choice" -eq "$total_count" ]]; then
             # Kill all scripts
             echo "Terminating all scripts..."
             for pid in "${pids[@]}"; do
@@ -200,8 +208,8 @@ run_scripts_in_parallel() {
 
 
 # Main Script starts here
-apt-get -y update
-apt-get -y upgrade
+apt-get -y update > /dev/null 2>&1
+apt-get -y upgrade > /dev/null 2>&1
 
 echo "Executing parameters creating function"
 create_parameters "$1" "File_folder_paths.txt"
@@ -223,7 +231,8 @@ check_and_create_file "$JSON_FILE"
 check_and_create_file "$XML_FILE"
 
 echo "Checking for MySQL insallation."
-check_mysql
+check_mysql_installation
+check_mysql_running
 echo "Pre checks are complete."
 
 # Parallel execution
