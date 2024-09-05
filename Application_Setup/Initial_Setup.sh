@@ -3,7 +3,7 @@
 # This script is used to setup the enivornment for the project in a Ubuntu based system.
 
 # Function to convert relative paths into absolute paths
-convert_paths_to_absolute() {
+create_parameters() {
     local repo_name="$1"
     local text_file="$2"
 
@@ -61,7 +61,7 @@ install_python() {
 # Function to check and install missing python libraries
 install_libraries() {
     REQUIREMENTS_FILE="pip_requirements.txt"
-    if [ ! -F "$REQUIREMENTS_FILE" ]; then
+    if [ ! -f "$REQUIREMENTS_FILE" ]; then
         echo "Requriements file '$REQUIREMENTS_FILE' is not found."
         exit 1
     fi
@@ -78,67 +78,76 @@ install_libraries() {
 
 
 # Function to check and create direcotries and files
-check_and_create() {
-    local dir_path="$1"
-    local file_name="$2"
-    local full_path="$MAIN_DIRECOTRY$dir_path/$file_name"
+check_and_create_file() {
+    local file_path="$1"
 
-    # Check if directory exists, else create it
-    if [ ! -d "$MAIN_DIRECTORY$dir_path" ]; then
-        echo "Directory $MAIN_DIRECTORY$dir_path does not exiswt, Creating it..."
-        mkdir -p "$MAIN_DIRECTORY$dir_path"
-        chmod 2775 "$MAIN_DIRECTORY$dir_path"
-    else
-        echo "Directory $MAIN_DIRECTORY$dir_path already exists."
+    # Check if the input is an absolute path
+    if [[ "$file_path" != /* ]]; then
+        echo "Error: Please provide an absolute path."
+        return 1
     fi
 
-    # Check if file exists, else create it
-    if [ ! -f "$full_path" ]; then
-        echo "File $full_path does not exist. Creating it..."
-        touch "$full_path"
-        chmod 2770 "$full_path"
+    # Extract the directory path from the file path.
+    local dir_path=$(dirname "$file_path")
+
+    # Create all missing directories
+    mkdir -p "$dir_path"
+
+    if [ $? -ne 0 ]; then
+        echo "Error: could not create directories leadin to '$file_path'"
+        return 1
+    fi
+
+    # Check if file exists and is accesible
+    if [ -f "$file_path" ]; then
+        echo "File '$file_path' already exists."
     else
-        echo "File $full_path already exists."
+        echo "File '$file_path' does not exist. Creating the file..."
+        touch "$file_path"
+        chmod 7777 "$file_path"
+
+        if [ $? -eq 0 ]; then
+            echo "File '$file_path' created successfully."
+        else
+            echo "Error: Could not create file '$file_path'."
+        fi
     fi
 }
 
 
-# Function to execute the existing MySQl installation script
-install_mysql_package() {
-    if [ -f "$MYSQL_INSTALL_SCRIPT" ]; then
-        bash "$MYSQL_INSTALL_SCRIPT"
-        echo "MySQL installation script executed."
-    else
-        echo "MySQL installation script not found at $MTYSQL_INSTALL_SCRIPT."
+# Function to check if MySQL is installed
+check_mysql_status() {
+    pgrep mysqld > /dev/null 2>&1
+    if [ $? -eq 0 ]; then
+        echo "MySQL is not running."
+        return 1
     fi
 }
 
 # Function to check if MySQL is installed.
-check_mysql() {
-    if command -v mysql $> /dev/null; then
-        echo "MySQL is already installed."
+check_mysql_installed() {
+    if command -v mysql >/dev/null 2&>1; then
+        echo "MySQL is installed."
+        return 0
     else
-        echo "MySQL is not installed. Executing the MySQL installation script..."
-        install_mysql_package
-    fi
-}
+        echo "MySQL is not installed. Installing MySQL..."
+        apt-get install -y mysql-server
 
-# Function to check the status of MySQL
-check_mysql_status() {
-    if systemctl is-active --quiet mysql; then
-        echo "MySQL is already running."
-    else
-        echo "MySQL is not running. Starting MySQL..."
-        sudo systemctl start mysql
-
-        # Verify if MySQL has started successfully
-        if systemctl is-active --quiet mysql; then
-            echo "MySQL started successfully."
-        else
-            echo "Failed to start MySQL."
+        if [ $? -ne 0 ]; then
+            echo "Error: Failed to install MySQL."
+            exit 1
         fi
+        
+        echo "MySQL installed successfully."
+        return 0
     fi
 }
+
+# Function to check if MySQL is running
+check_mysql_running() {
+    # Check if the MySQL process is running
+}
+
 
 # Function to run scripts in parallel
 run_scripts_in_parallel() {
@@ -150,7 +159,7 @@ run_scripts_in_parallel() {
         script="${!var}"
         if [[ -f "$script" ]]; then
             # Run the script in the background, redirect output to a log file, and store its PID
-            bash "$script" >"${var}.log" 2>&1 & pids+=($!)      # Append the PID of the script to the array
+            python3 "$script" >"${var}.log" 2>&1 & pids+=($!)      # Append the PID of the script to the array
             scripts+=("$var")                                   # Append the script name to the array
             echo "Started $script with PID ${pids[-1]}."
         else
@@ -191,8 +200,11 @@ run_scripts_in_parallel() {
 
 
 # Main Script starts here
-echo "Executing param creating function"
-convert_paths_to_absolute "$1" "File_folder_paths.txt"
+apt-get -y update
+apt-get -y upgrade
+
+echo "Executing parameters creating function"
+create_parameters "$1" "File_folder_paths.txt"
 
 # Source parameter file
 source "Setup_parameters.txt"
@@ -206,13 +218,13 @@ install_libraries
 echo "Completed executing function to install Python libraries"
 
 # Check and create the directories as defined in the config file.
-check_and_create "$CSV_FILE_PATH" "$CSV_FILE_NAME"
-check_and_create "$JSON_FILE_PATH" "$JSON_FILE_NAME"
-check_and_create "$XML_FILE_PATH" "$XML_FILE_NAME"
+check_and_create_file "$CSV_FILE"
+check_and_create_file "$JSON_FILE"
+check_and_create_file "$XML_FILE"
 
+echo "Checking for MySQL insallation."
 check_mysql
-
-check_mysql_status
+echo "Pre checks are complete."
 
 # Parallel execution
 run_scripts_in_parallel
