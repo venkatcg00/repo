@@ -1,6 +1,8 @@
 CSV_FILE='Data_Storage/CSV_Storage/ATT_csd_data.csv'
 JSON_FILE='Data_Storage/JSON_Storage/Amazon_csd_data.json'
 XML_FILE='Data_Storage/XML_Storage/Uber_csd_data.xml'
+DDL_SCRIPT='Application_Setup/RDBMS_DDL.sql'
+DML_SCRIPT='Application_Setup/RDBMS_DML.sql'
 PARALLEL_SCRIPT_1='Data_Generators/CSV_Data_Generator.py'
 PARALLEL_SCRIPT_2='Data_Generators/JSON_Data_Generator.py'
 PARALLEL_SCRIPT_3='Data_Generators/XML_Data_generator.py'
