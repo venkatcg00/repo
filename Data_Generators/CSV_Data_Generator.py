@@ -7,9 +7,35 @@ from typing import List, Dict, Any, Optional
 from datetime import datetime, timedelta
 from allowed_values import connect_to_database, fetch_allowed_values, close_database_connection
 
+def get_parameters(parameter_file_path: str) -> Dict[str, str]:
+    """
+    Fetch the setup parameters from the parameter file.
+    
+    Parameters:
+    parameter_file_path (str): The path to the setup parameter file.
+
+    Returns:
+    Dict[str, str]: A dictionary containing parameter names and values
+    """
+    parameters = {}
+
+    # Read the file and extract the parameters
+    with open(parameter_file_path, 'r') as parameter_file:
+        for line in parameter_file:
+            # Strip any extra spaces or new line characters
+            line = line.strip()
+
+            # Ignore empty lines
+            if line:
+                # Split each line by "=" to get key and value
+                key, value = line.split("=", 1)
+                parameters[key.strip()] = value.strip()
+    
+    return parameters
+
 def get_max_record_id(csv_file_path: str) -> int:
     """
-    etch the maximum RECORD_IF from the existing CSV file.
+    Fetch the maximum RECORD_ID from the existing CSV file.
 
     Parameters:
     csv_file_path (str): The file path of the CSV data file.
@@ -17,12 +43,19 @@ def get_max_record_id(csv_file_path: str) -> int:
     Returns:
     int: The maximum RECORD_ID found in the CSV file, or 0 if the file is empty or does not exist.
     """
-    try:
-        with open(csv_file_path) as csv_file:
-            reader = csv.reader(csv_file)
-            lines = list(reader)
-            return int(lines[-1][0])
-    except (FileNotFoundError, csv.Error()):
+    # Check if the file exists and is not empty
+    if os.path.exists(csv_file_path) and os.path.getsize(csv_file_path) > 0:
+        try:
+            with open(csv_file_path, mode = 'r') as csv_file:
+                reader = csv.reader(csv_file, delimiter = '|')
+                record_ids = [int(row[0]) for row in reader if row] # Etract the first column
+                if record_ids:
+                    return max(record_ids) # Return the highest value
+                else:
+                    return 0
+        except Exception as e:
+            return 0
+    else:
         return 0
     
 
@@ -90,17 +123,16 @@ def generate_and_update_records(
 
         # Introduce NULL values to some fields
         if random.random() < 0.1:
-            key_to_nullify = random.choice(random.randint(1,12))
+            key_to_nullify = random.choice([random.randint(1,12)])
             new_record[key_to_nullify] = None
         
         records.append(new_record)
 
         # Introduce updated to data
         if random.random() < 0.25 and record_id > 1:
-            update_record_id = random.randint(1, record_id)
+            update_record_id = random.randint([1, record_id]) 
             updated_record = generate_random_recod(update_record_id, support_categories, agent_pseudo_names, customer_types)
-
-        records.append(updated_record)
+            records.append(updated_record)
 
     return records
 
@@ -130,37 +162,34 @@ def main() -> None:
     project_directory = os.path.dirname(current_directory)
 
     # Construct the path to the parameter file
-    cfg_file_path = os.path.join(project_directory, 'Setup', 'Initial_setup_parameters.cfg')
+    parameter_file_path = os.path.join(project_directory, 'Application_Setup', 'Setup_parameters.txt')
     
-    config = configparser.ConfigParser()
-    config.read(cfg_file_path)
+    parameters = get_parameters(parameter_file_path)
 
     # MySQL database configuration
     db_config = {
-        'user' : config.get('DEFAULT', 'DB_USER'),
-        'password' : config.get('DEFAULT', 'DB_PASS'),
-        'host' : 'localhost',
-        'database' : config.get('DEFAULT', 'DB_NAME')
+        'user' : parameters['DB_USER'],
+        'password' : parameters['DB_PASSWORD'],
+        'host' : parameters['DB_HOST'],
+        'database' : parameters['DB_NAME']
     }
 
     # Connect to the database
     connection, cursor = connect_to_database(db_config)
 
     # Fetch allowed values from the database
-    support_categories: List[str] = fetch_allowed_values(cursor, 'CSD_SUPPORT_AREAS', 'AT&T', 'SUPPORT_AREA_NAME')
-    agent_pseudo_names: List[str] = fetch_allowed_values(cursor, 'CSD_AGENTS', 'AT&T', 'PSEUDO_CODE')
-    customer_types: List[str] = fetch_allowed_values(cursor, 'CSD_CUSTOMER_TYPES', 'AT&T', 'CUSTOMER_TYPE_NAME')
+    support_categories: List[str] = fetch_allowed_values(cursor, "CSD_SUPPORT_AREAS", "'AT&T'", "SUPPORT_AREA_NAME")
+    agent_pseudo_names: List[str] = fetch_allowed_values(cursor, "CSD_AGENTS", "'AT&T'", "PSEUDO_CODE")
+    customer_types: List[str] = fetch_allowed_values(cursor, "CSD_CUSTOMER_TYPES", "'AT&T'", "CUSTOMER_TYPE_NAME")
 
     # Close the database connection
     close_database_connection(connection, cursor)
 
     # Get CAV file path and name from config
-    csv_file_path: str = config.get('DEFAULT', 'CSV_FILE_PATH')
-    csv_file_name: str = config.get('DEFAULT', 'CSV_FILE_NAME')
-    full_csv_path: str = os.path.join(csv_file_path, csv_file_name)
+    csv_file_path: str = parameters['CSV_FILE']
 
     # Fetch the maximum RECORD_ID from the existinf CSV file
-    max_record_id: int = get_max_record_id(full_csv_path)
+    max_record_id: int = get_max_record_id(csv_file_path)
 
     while True:
         # Generate a random number of records
@@ -170,7 +199,7 @@ def main() -> None:
         records: List[List[str]] = generate_and_update_records(support_categories, agent_pseudo_names, customer_types, max_record_id, num_records)
 
         # Write the records to the CSV ile
-        write_csv_data(full_csv_path, records)
+        write_csv_data(csv_file_path, records)
 
         # Update max_record_id for the next iteration
         max_record_id += len([record for record in records if int(record[0]) > max_record_id])
