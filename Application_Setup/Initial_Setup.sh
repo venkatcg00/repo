@@ -146,10 +146,33 @@ check_mysql_running() {
         if service mysql status | grep -q "running"; then
             echo "MySQL has started successfully."
         else
-            echo "ErrorL: Failed to start MySQL."
+            echo "Error: Failed to start MySQL."
         fi
     else
         echo "MySQL is running"
+    fi
+}
+
+
+# Function to execute sql scripts
+execute_sql_scripts () {
+    local sql_script="$1"
+
+    # Check if the SQL script exists
+    if [[ -f "$sql_script" ]]; then
+        echo "Executing script: $sql_script."
+
+        # Execute the SQL script using MySQL client.
+        mysql -u root < "$sql_script"
+
+        if [[ $? -eq 0 ]]; then
+            echo "SQL script executed successfully!"
+        else
+            echo "Error occured while executing the SQL script."
+        fi
+    else
+        echo "File not found: $sql_script."
+        return 1
     fi
 }
 
@@ -158,6 +181,7 @@ check_mysql_running() {
 run_scripts_in_parallel() {
     local pids=()       # Array to store the process IDs
     local scripts=()    # Array to store the script names in execution
+    local logs=()       # Array to store the log file names in execution
 
     # Iterate over all variables deifined in the config file
     for var in $(compgen -A variable | grep "PARALLEL_SCRIPT_"); do
@@ -165,7 +189,8 @@ run_scripts_in_parallel() {
         if [[ -f "$script" ]]; then
             # Run the script in the background, redirect output to a log file, and store its PID
             python3 "$script" >"${var}.log" 2>&1 & pids+=($!)      # Append the PID of the script to the array
-            scripts+=("$script")                                   # Append the script name to the array
+            scripts+=("$script") 
+            logs+=("${var}.log")                                  # Append the script name to the array
             echo "Started $script with PID ${pids[-1]}."
         else
             echo "Script $script not found."
@@ -173,7 +198,7 @@ run_scripts_in_parallel() {
     done
 
     # Display the menu
-    while true; do
+    while [[ "${#scripts[@]}" -ne 0 ]]; do
         echo "The scripts running are listed below. Select a script to kill:"
         for i in "${!scripts[@]}"; do
             echo "$((i + 1))) ${scripts[i]}"
@@ -181,7 +206,9 @@ run_scripts_in_parallel() {
         scripts_count=${#scripts[@]}
         increment=1
         total_count=$(($scripts_count + $increment))
-        echo "$total_count) all"
+        if [[ "${#scripts[@]}" -ne 0 ]]; then
+            echo "$total_count) all"
+        fi
 
         read -r choice
 
@@ -190,14 +217,20 @@ run_scripts_in_parallel() {
             # Kill the selected script
             index=$((choice - 1))
             kill "${pids[$index]}" 2>/dev/null
+            rm "${logs[$index]}"
             echo "Terminated ${scripts[$index]} with PID ${pids[$index]}}"
-            unset pids[$index] scripts[$index]
+            unset pids[$index] scripts[$index] logs[$index]
             pids=("${pids[@]}") scripts=(${scripts[@]})     # Re-index arrays
         elif [[ "$choice" -eq "$total_count" ]]; then
             # Kill all scripts
             echo "Terminating all scripts..."
             for pid in "${pids[@]}"; do
                 kill "$pid" 2>/dev/null
+            done
+
+            # Delete all log files
+            for log in "${logs[@]}"; do
+                rm "$log"
             done
             break
         else
@@ -233,6 +266,9 @@ check_and_create_file "$XML_FILE"
 echo "Checking for MySQL insallation."
 check_mysql_installation
 check_mysql_running
+execute_sql_scripts "$DB_SETUP_SCRIPT"
+execute_sql_scripts "$DDL_SCRIPT"
+execute_sql_scripts "$DML_SCRIPT"
 echo "Pre checks are complete."
 
 # Parallel execution

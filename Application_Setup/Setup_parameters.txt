@@ -1,6 +1,9 @@
 CSV_FILE=/workspaces/repo/Data_Storage/CSV_Storage/ATT_csd_data.csv
 JSON_FILE=/workspaces/repo/Data_Storage/JSON_Storage/Amazon_csd_data.json
 XML_FILE=/workspaces/repo/Data_Storage/XML_Storage/Uber_csd_data.xml
+DB_SETUP_SCRIPT=/workspaces/repo/Application_Setup/DB_Setup.sql
+DDL_SCRIPT=/workspaces/repo/Application_Setup/RDBMS_DDL.sql
+DML_SCRIPT=/workspaces/repo/Application_Setup/RDBMS_DML.sql
 PARALLEL_SCRIPT_1=/workspaces/repo/Data_Generators/CSV_Data_Generator.py
 PARALLEL_SCRIPT_2=/workspaces/repo/Data_Generators/JSON_Data_Generator.py
 PARALLEL_SCRIPT_3=/workspaces/repo/Data_Generators/XML_Data_generator.py
