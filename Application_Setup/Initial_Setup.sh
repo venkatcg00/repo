@@ -37,9 +37,10 @@ create_parameters() {
             echo "Warning: Skipping malformed line: $key=$relative_path"
         fi
     done < "$text_file"
-    echo "DB_USER='csd_user'" >> "$output_file"
-    echo "DB_NAME='csd_database'" >> "$output_file"
-    echo "DB_PASSWORD='Csd_password@123'" >> "$output_file"
+    echo "DB_USER=csd_user" >> "$output_file"
+    echo "DB_NAME=csd_database" >> "$output_file"
+    echo "DB_PASSWORD=Csd_password@123" >> "$output_file"
+    echo "DB_HOST=127.0.0.1" >> "$output_file"
 
     echo "Parameter file has created with name $output_file"
 }
