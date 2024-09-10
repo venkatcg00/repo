@@ -7,6 +7,34 @@ import xml.etree.ElementTree as ET
 from typing import List, Dict, Optional, Tuple, Union
 from allowed_values import connect_to_database, fetch_allowed_values, close_database_connection
 
+
+def get_parameters(parameter_file_path: str) -> Dict[str, str]:
+    """
+    Fetch the setup parameters from the parameter file.
+    
+    Parameters:
+    parameter_file_path (str): The path to the setup parameter file.
+
+    Returns:
+    Dict[str, str]: A dictionary containing parameter names and values
+    """
+    parameters = {}
+
+    # Read the file and extract the parameters
+    with open(parameter_file_path, 'r') as parameter_file:
+        for line in parameter_file:
+            # Strip any extra spaces or new line characters
+            line = line.strip()
+
+            # Ignore empty lines
+            if line:
+                # Split each line by "=" to get key and value
+                key, value = line.split("=", 1)
+                parameters[key.strip()] = value.strip()
+    
+    return parameters
+
+
 def get_max_record_id(xml_file_path: str) -> int:
     """
     Fetch the maximum SUPPORT_IDENTIFIER from the existing XML file.
@@ -51,15 +79,15 @@ def generate_random_record(
     ET.SubElement(record, "CONTACT_REGARDING").text = random.choice(support_categories)
     ET.SubElement(record, "AGENT_CODE").text = random.choice(agent_psuedo_names)
     ET.SubElement(record, "DATE_OF_INTERACTION").text = (datetime.now() - timedelta(days = random.randint(0,1000))).strftime("%Y%m%d%H%M%S")
-    ET.SubElement(record, "STATUS_OF_INTERACTION").text  = random.choice(["Interaction Completed", "Customer Dropped", "Transferred"])
-    ET.SubElement(record, "TYPE_OF_INTERACTION").text = random.choice(["Call", "Chat"])
+    ET.SubElement(record, "STATUS_OF_INTERACTION").text  = random.choice(["INTERACTION COMPLETED", "CUSTOMER DROPPED", "TRANSFERRED"])
+    ET.SubElement(record, "TYPE_OF_INTERACTION").text = random.choice(["CALL", "CHAT"])
     ET.SubElement(record, "CUSTOMER_TYPE").text = random.choice(customer_types)
     ET.SubElement(record, "CONTACT_DURATION").text = str(timedelta(seconds = random.randint(10,600)))
     ET.SubElement(record, "AFTER_CONTACT_WORK_TIME").text  = str(timedelta(seconds = random.randint(10,600)))
-    ET.SubElement(record, "INCIDENT_STATUS").text = random.choice(["Resolved", "Pending Resolution", "Pending Customer Update", "Work In Progress", "Transferred to another Queue"])
+    ET.SubElement(record, "INCIDENT_STATUS").text = random.choice(["RESOLVED", "PENDING RESOLUTION", "PENDING CUSTOMER UPDATE", "WORK IN PROGRESS", "TRANSFERRED TO ANOTHER QUEUE"])
     ET.SubElement(record, "1ST_CONTACT_SOLVE").text  = random.choice(["TRUE", "FALSE"])
     ET.SubElement(record, "SUPPORT_RATING").text = str(random.choice([random.randint(1, 5)]))
-    ET.SubElement(record, "TIME_STAMP").text = str(datetime.now().strftime("%Y/%m%d %H:%M:%S"))
+    ET.SubElement(record, "TIME_STAMP").text = str(datetime.now().strftime("%Y/%m/%d %H:%M:%S"))
 
     return record
 
@@ -100,8 +128,7 @@ def generate_and_update_records(
         if random.random() < 0.25 and record_id > 1:
             update_record_id: int = random.randint(1, record_id)
             update_record: ET.Element = generate_random_record(update_record_id, support_categories, agent_pseudo_names, customer_types)
-
-        records.append(update_record)
+            records.append(update_record)
 
     return records
     
@@ -128,43 +155,40 @@ def write_xml_data(xml_file_path: str, data: List[ET.Element]) -> None:
 
 def main() -> None:
     # Get the directory where the current Python script is located
-    current_directory: str = os.path.dirname(os.path.abspath(__file__))
+    current_directory = os.path.dirname(os.path.abspath(__file__))
 
     # Navigate to the parent directory
-    project_directory: str = os.path.dirname(current_directory)
+    project_directory = os.path.dirname(current_directory)
 
     # Construct the path to the parameter file
-    cfg_file_path: str = os.path.join(project_directory, 'Setup', 'Initial_setup_parameters.cfg')
-
-    config = configparser.ConfigParser()
-    config.read(cfg_file_path)
+    parameter_file_path = os.path.join(project_directory, 'Application_Setup', 'Setup_parameters.txt')
+    
+    parameters = get_parameters(parameter_file_path)
 
     # MySQL database configuration
-    db_config: Dict[str, str] = {
-        'user' : config.get('DEFAULT', 'DB_USER'),
-        'password' : config.get('DEFAULT', 'DB_PASS'),
-        'host' : 'localhost',
-        'database' : config.get('DEFAULT', 'DB_NAME')
+    db_config = {
+        'user' : parameters['DB_USER'],
+        'password' : parameters['DB_PASSWORD'],
+        'host' : parameters['DB_HOST'],
+        'database' : parameters['DB_NAME']
     }
 
     # Connect to the database
     connection, cursor = connect_to_database(db_config)
 
     # Fetch allowed values from the database
-    support_categories: List[str] = fetch_allowed_values(cursor, 'CSD_SUPPORT_AREAS', 'UBER', 'SUPPORT_AREA_NAME')
-    agent_pseudo_names: List[str] = fetch_allowed_values(cursor, 'CSD_AGENTS', 'UBER', 'PSEUDO_CODE')
-    customer_types: List[str] = fetch_allowed_values(cursor, 'CSD_CUSTOMER_TYPES', 'UBER', 'CUSTOMER_TYPE_NAME')
+    support_categories: List[str] = fetch_allowed_values(cursor, "CSD_SUPPORT_AREAS", "'UBER'", "SUPPORT_AREA_NAME")
+    agent_pseudo_names: List[str] = fetch_allowed_values(cursor, "CSD_AGENTS", "'UBER'", "PSEUDO_CODE")
+    customer_types: List[str] = fetch_allowed_values(cursor, "CSD_CUSTOMER_TYPES", "'UBER'", "CUSTOMER_TYPE_NAME")
 
     # Close the database connection
     close_database_connection(connection, cursor)
 
     # Get XML file path and name from config
-    xml_file_path: str = config.get('DEFAULT', 'XML_FILE_PATH')
-    xml_file_name: str = config.get('DEFAULT', 'XML_FILE_NAME')
-    full_xml_path: str = os.path.join(xml_file_path, xml_file_name)
+    xml_file_path: str = parameters['XML_FILE']
 
     # Fetch the maximum SUPPORT_IDENTIFIER from the existing XML file
-    max_record_id: int = get_max_record_id(full_xml_path)
+    max_record_id: int = get_max_record_id(xml_file_path)
 
     while True:
         # Generate a random number of records
@@ -174,10 +198,10 @@ def main() -> None:
         records: List[ET.Element] = generate_and_update_records(support_categories, agent_pseudo_names, customer_types, max_record_id, num_records)
 
         # Write the records to the XML file
-        write_xml_data(full_xml_path, records)
+        write_xml_data(xml_file_path, records)
 
         # Update the max_record_id for the next iteration
-        max_record_id += len([record for record in records if record.find("SUPPORT_IDENTIFIER").text and int(record.find("SUPPORT_IDENTIFIER").text) > max_record_id]) # type: ignore
+        max_record_id: int = get_max_record_id(xml_file_path)
 
         # Sleep for a random interval
         time.sleep(random.uniform(1, 50))

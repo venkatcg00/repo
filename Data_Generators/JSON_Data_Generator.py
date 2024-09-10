@@ -85,14 +85,14 @@ def generate_random_record(
         "SUPPORT_CATEGORY" : random.choice(support_categories),
         "AGENT_pseudo_NAME" : random.choice(agent_pseudo_names),
         "CONTACT_DATE" : (datetime.now() - timedelta(days = random.randint(0, 1000))).strftime('%d/%m/%Y %H:%M:%S'),
-        "INTERACTION_STATUS" : random.choice(["Completed", "Dropped", "Transferred"]),
-        "INTERACTION_TYPE" : random.choice(["Call", "Chat"]),
+        "INTERACTION_STATUS" : random.choice(["COMPLETED", "DROPPED", "TRANSFERRED"]),
+        "INTERACTION_TYPE" : random.choice(["CALL", "CHAT"]),
         "TYPE_OF_CUSTOMER" : random.choice(customer_types),
         "INTERACTION_DURATION" : int(interaction_duration),
         "TOTAL_TIME" : int(interaction_duration + random.choice([random.randint(10, 600)])),
-        "STATUS_OF_CUSTOMER_INCIDENT" : random.choice(["Resolved", "Pending Resolution", "Pending Customer Update", "Work In Progress", "Transferred to another Queue"]),
-        "RESOLVED_IN_FIRST_CONTACT" : random.choice(["Yes", "No"]),
-        "SOLUTION_TYPE" : random.choice(["Self-Help Option", "Support Team Intervention"]),
+        "STATUS_OF_CUSTOMER_INCIDENT" : random.choice(["RESOLVED", "PENDING RESOLUTION", "PENDING CUSTOMER UPDATE", "WORK IN PROGRESS", "TRANSFERRED TO ANOTHER QUEUE"]),
+        "RESOLVED_IN_FIRST_CONTACT" : random.choice(["YES", "NO"]),
+        "SOLUTION_TYPE" : random.choice(["SELF-HELP OPTION", "SUPPORT TEAM INTERVENTION"]),
         "RATING" : random.choice([random.randint(1, 10)])
     }
 
