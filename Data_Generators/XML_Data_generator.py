@@ -112,9 +112,10 @@ def generate_and_update_records(
     List[ET.Element]: A list containing the new and updated records.
     """
     records: List[ET.Element] = []
+    record_id = start_record_id
 
     for i in range(num_records):
-        record_id: int = start_record_id + 1
+        record_id: int = record_id + 1
         new_record: ET.Element = generate_random_record(record_id, support_categories, agent_pseudo_names, customer_types)
 
         # Introduce NULL calues to some fiedls
