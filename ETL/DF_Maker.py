@@ -79,12 +79,8 @@ class File_to_DF:
         DF: PySpark DF object.
         """
 
-        # Read the JSON file
-        with open(file_path, 'r') as json_file:
-            json_data = json.load(json_file)
-
         # Convert the JSON data (list of dictionaries) to a Spark Dataframe
-        df = self.spark.createDataFrame(json_data)
+        df = self.spark.read.json(file_path)
 
         return df
     
