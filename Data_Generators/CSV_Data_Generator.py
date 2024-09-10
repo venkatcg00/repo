@@ -2,7 +2,7 @@ import os
 import random
 import csv
 import time
-from typing import List, Dict, Any, Optional
+from typing import List, Dict
 from datetime import datetime, timedelta
 from allowed_values import connect_to_database, fetch_allowed_values, close_database_connection
 
@@ -34,13 +34,13 @@ def get_parameters(parameter_file_path: str) -> Dict[str, str]:
 
 def get_max_record_id(csv_file_path: str) -> int:
     """
-    Fetch the maximum RECORD_ID from the existing CSV file.
+    Fetch the maximum TICEKT_IDENTIFIER from the existing CSV file.
 
     Parameters:
     csv_file_path (str): The file path of the CSV data file.
 
     Returns:
-    int: The maximum RECORD_ID found in the CSV file, or 0 if the file is empty or does not exist.
+    int: The maximum TICEKT_IDENTIFIER found in the CSV file, or 0 if the file is empty or does not exist.
     """
     # Check if the file exists and is not empty
     if os.path.exists(csv_file_path) and os.path.getsize(csv_file_path) > 0:
@@ -85,7 +85,7 @@ def generate_random_recod(
         random.choice([random.randint(10, 600)]),
         random.choice([random.randint(10, 600)]),
         random.choice(["RESOLVED", "PENDING RESOLUTION", "PENDING CUSTOMER UPDATE", "WORK IN PROGRESS", "TRANSFERRED TO ANOTHER QUEUE"]),
-        random.choice(["YES", "NO"]),
+        random.choice([1, 0]),
         random.choice(["SELF-HELP OPTION", "SUPPORT TEAM INTERVENTION"]),
         random.choice(["WORST", "BAD", "NEUTRAL", "GOOD", "BEST"])
     ]

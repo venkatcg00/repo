@@ -1,10 +1,9 @@
 import os
 import random
 import time
-import configparser
 from datetime import datetime, timedelta
 import xml.etree.ElementTree as ET
-from typing import List, Dict, Optional, Tuple, Union
+from typing import List, Dict
 from allowed_values import connect_to_database, fetch_allowed_values, close_database_connection
 
 

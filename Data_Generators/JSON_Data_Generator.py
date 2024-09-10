@@ -2,7 +2,6 @@ import os
 import random
 import time
 import json
-import configparser
 from typing import List, Dict, Any, Optional
 from datetime import datetime, timedelta
 from allowed_values import connect_to_database, fetch_allowed_values, close_database_connection
@@ -43,7 +42,7 @@ def get_max_record_id(json_file_path: str) -> List[int]:
     json_file_path (str): The file path of the JSON data file.
 
     Returns:
-    int: The maximum RECORD_ID found in the JSON file, or 0 if the file is empty or does not exist.
+    List(int): The list of maximum RECORD_ID and INTERACTION_ID found in the JSON file, or 0 if the file is empty or does not exist.
     """
     try:
         with open(json_file_path, 'r') as json_file:
