@@ -2,7 +2,6 @@ import os
 import random
 import csv
 import time
-import configparser
 from typing import List, Dict, Any, Optional
 from datetime import datetime, timedelta
 from allowed_values import connect_to_database, fetch_allowed_values, close_database_connection
@@ -46,13 +45,10 @@ def get_max_record_id(csv_file_path: str) -> int:
     # Check if the file exists and is not empty
     if os.path.exists(csv_file_path) and os.path.getsize(csv_file_path) > 0:
         try:
-            with open(csv_file_path, mode = 'r') as csv_file:
-                reader = csv.reader(csv_file, delimiter = '|')
-                record_ids = [int(row[0]) for row in reader if row] # Etract the first column
-                if record_ids:
-                    return max(record_ids) # Return the highest value
-                else:
-                    return 0
+            with open(csv_file_path, mode = 'r', newline = '') as csv_file:
+                reader = csv.DictReader(csv_file, delimiter = '|')
+                record_ids = [int(row['TICKET_IDENTIFIER']) for row in reader]
+                return max(record_ids)
         except Exception as e:
             return 0
     else:
@@ -83,15 +79,15 @@ def generate_random_recod(
         random.choice(support_categories),
         random.choice(agent_pseudo_names),
         (datetime.now() - timedelta(days = random.randint(0, 1000))).strftime('%m%d%Y%H%M%S'),
-        random.choice(["Completed", "Dropped", "Transferred"]),
-        random.choice(["Call", "Chat"]),
+        random.choice(["COMPLETED", "DROPPED", "TRANSFERRED"]),
+        random.choice(["CALL", "CHAT"]),
         random.choice(customer_types),
         random.choice([random.randint(10, 600)]),
         random.choice([random.randint(10, 600)]),
-        random.choice(["Resolved", "Pending Resolution", "Pending Customer Update", "Work In Progress", "Transferred to another Queue"]),
-        random.choice(["Yes", "No"]),
-        random.choice(["Self-Help Option", "Support Team Intervention"]),
-        random.choice(["Worst", "Bad", "Neutral", "Good", "Best"])
+        random.choice(["RESOLVED", "PENDING RESOLUTION", "PENDING CUSTOMER UPDATE", "WORK IN PROGRESS", "TRANSFERRED TO ANOTHER QUEUE"]),
+        random.choice(["YES", "NO"]),
+        random.choice(["SELF-HELP OPTION", "SUPPORT TEAM INTERVENTION"]),
+        random.choice(["WORST", "BAD", "NEUTRAL", "GOOD", "BEST"])
     ]
 
 
@@ -116,21 +112,22 @@ def generate_and_update_records(
     List[List[str]]: A list containing the new and updated records.
     """
     records  = []
+    record_id = start_record_id
 
     for i in range(num_records):
-        record_id = start_record_id + 1
+        record_id = record_id + 1
         new_record = generate_random_recod(record_id, support_categories, agent_pseudo_names, customer_types)
 
         # Introduce NULL values to some fields
         if random.random() < 0.1:
-            key_to_nullify = random.choice([random.randint(1,12)])
+            key_to_nullify = random.randint(1,12)
             new_record[key_to_nullify] = None
         
         records.append(new_record)
 
         # Introduce updated to data
         if random.random() < 0.25 and record_id > 1:
-            update_record_id = random.randint([1, record_id]) 
+            update_record_id = random.randint(1, record_id) 
             updated_record = generate_random_recod(update_record_id, support_categories, agent_pseudo_names, customer_types)
             records.append(updated_record)
 
@@ -145,13 +142,22 @@ def write_csv_data(csv_file_path: str, data: List[List[str]]) -> None:
     csv_file_path (str): The file path where the CSV data should be saved.
     data (List[List[str]]): The data to be written to the CSV file.
     """
+    header = ["TICKET_IDENTIFIER", "SUPPORT_CATEGORY", "AGENT_NAME", "DATE_OF_CALL", "CALL_STATUS", "CALL_TYPE", "TYPE_OF_CUSTOMER", "DURATION", "WORK_TIME", "TICKET_STATUS", "RESOLVED_IN_FIRST_CONTACT", "RESOLUTION_CATEGORY", "RATING"]
     try:
-        with open(csv_file_path, 'r+') as csv_file:
-            csv_file.write("|".join(data))
+        
+        with open(csv_file_path, 'a', newline = '') as csv_file:
+            if os.path.getsize(csv_file_path) == 0:
+                writer = csv.writer(csv_file, delimiter = '|')
+                writer.writerow(header)
+                writer.writerows(data)
+            else:
+                writer = csv.writer(csv_file, delimiter = '|')
+                writer.writerows(data)
     except FileNotFoundError:
-        with open(csv_file_path, 'w') as csv_file:
-            csv_file.write('TICKET_IDENTIFIER|SUPPORT_CATEGORY|AGENT_NAME|DATE_OF_CALL|CALL_STATUS|CALL_TYPE|TYPE_OF_CUSTOMER|DURATION|WORK_TIME|TICKET_STATUS|RESOLVED_IN_FIRST_CONTACT|RESOLUTION_CATEGORY|RATING')
-            csv_file.write("|".join(data))
+        with open(csv_file_path, 'w', newline = '') as csv_file:
+            writer = csv.writer(csv_file, delimiter = '|')
+            writer.writerow(header)
+            writer.writerows(data)
 
 
 def main() -> None:
@@ -202,7 +208,7 @@ def main() -> None:
         write_csv_data(csv_file_path, records)
 
         # Update max_record_id for the next iteration
-        max_record_id += len([record for record in records if int(record[0]) > max_record_id])
+        max_record_id = get_max_record_id(csv_file_path)
 
         # Sleep for a random interval
         time.sleep(random.uniform(1, 50))

@@ -116,6 +116,29 @@ check_and_create_file() {
 }
 
 
+# Function to execute sql scripts
+execute_sql_scripts () {
+    local sql_script="$1"
+
+    # Check if the SQL script exists
+    if [[ -f "$sql_script" ]]; then
+        echo "Executing script: $sql_script."
+
+        # Execute the SQL script using MySQL client.
+        mysql -u root < "$sql_script"
+
+        if [[ $? -eq 0 ]]; then
+            echo "SQL script executed successfully!"
+        else
+            echo "Error occured while executing the SQL script."
+        fi
+    else
+        echo "File not found: $sql_script."
+        return 1
+    fi
+}
+
+
 # Function to check if MySQL is installed.
 check_mysql_installation() {
     if command -v mysql > /dev/null 2>&1 ; then
@@ -154,26 +177,17 @@ check_mysql_running() {
     fi
 }
 
+# Check if the database exists in MySQL
+check_database() {
+    DB_EXISTS=$(mysql -u root -e "SHOW DATABASES LIKE '$DB_NAME';" | grep "$DB_NAME" > /dev/null; echo "$?")
 
-# Function to execute sql scripts
-execute_sql_scripts () {
-    local sql_script="$1"
-
-    # Check if the SQL script exists
-    if [[ -f "$sql_script" ]]; then
-        echo "Executing script: $sql_script."
-
-        # Execute the SQL script using MySQL client.
-        mysql -u root < "$sql_script"
-
-        if [[ $? -eq 0 ]]; then
-            echo "SQL script executed successfully!"
-        else
-            echo "Error occured while executing the SQL script."
-        fi
+    if [ $DB_EXISTS -eq 0 ]; then
+        echo "Database '$DB_NAME' exists."
     else
-        echo "File not found: $sql_script."
-        return 1
+        echo "Databse '$DB_NAME' does not exist. Executing the SQL scripts to setup the database..."
+        execute_sql_scripts "$DB_SETUP_SCRIPT"
+        execute_sql_scripts "$DDL_SCRIPT"
+        execute_sql_scripts "$DML_SCRIPT"
     fi
 }
 
@@ -267,9 +281,7 @@ check_and_create_file "$XML_FILE"
 echo "Checking for MySQL insallation."
 check_mysql_installation
 check_mysql_running
-execute_sql_scripts "$DB_SETUP_SCRIPT"
-execute_sql_scripts "$DDL_SCRIPT"
-execute_sql_scripts "$DML_SCRIPT"
+check_database
 echo "Pre checks are complete."
 
 # Parallel execution
