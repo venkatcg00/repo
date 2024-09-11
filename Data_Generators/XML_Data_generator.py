@@ -119,7 +119,7 @@ def generate_and_update_records(
 
         # Introduce NULL calues to some fiedls
         if random.random() < 0.1:
-            key_to_nullify: str = random.choice(["CONTACT_REGARDING", "AGENT_CODE", "DATE_OF_INTERACTION", "STATUS_OF_INTERACTION","TYPE_OF_INTERACTION", "CUSTOMER_TYPE", "CONTACT_DURATION", "AFTER_CONTACT_WORK_TIME", "INCIDENT_STATUS", "1ST_CONTACT_SOLVE", "SUPPORT_RATING"])
+            key_to_nullify: str = random.choice(["CONTACT_REGARDING", "AGENT_CODE", "DATE_OF_INTERACTION", "STATUS_OF_INTERACTION","TYPE_OF_INTERACTION", "CUSTOMER_TYPE", "CONTACT_DURATION", "AFTER_CONTACT_WORK_TIME", "INCIDENT_STATUS", "FIRST_CONTACT_SOLVE", "SUPPORT_RATING"])
             new_record.find(key_to_nullify).text = None # type: ignore # type: ignore
 
         records.append(new_record)
