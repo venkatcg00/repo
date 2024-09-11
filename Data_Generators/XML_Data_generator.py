@@ -45,10 +45,11 @@ def get_max_record_id(xml_file_path: str) -> int:
     int: The maximum SUPPORT_IDENTIFIER found in the XML file, or 0 if the file is empty or does not exist.
     """
     try:
-        tree = ET.parse(xml_file_path)
-        root = tree.getroot()
-        if root:
-            return max(int(record.find('SUPPORT_IDENTIFIER').text) for record in root.findall('RECORDS') if record.find('SUPPORT_IDENTIFIER').text is not None) # type: ignore
+        if os.path.getsize(xml_file_path) ==0:
+            tree = ET.parse(xml_file_path)
+            root = tree.getroot()
+            if root:
+                return max(int(record.find('SUPPORT_IDENTIFIER').text) for record in root.findall('RECORDS') if record.find('SUPPORT_IDENTIFIER').text is not None) # type: ignore
     except (FileNotFoundError, ET.ParseError):
         return 0
     return 0
