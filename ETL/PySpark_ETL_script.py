@@ -1,6 +1,6 @@
-from DF_Maker import File_to_DF
-from typing import Dict
 import os
+from file_to_dataframe import *
+from typing import List, Dict
 
 
 def get_parameters(parameter_file_path: str) -> Dict[str, str]:
@@ -29,9 +29,6 @@ def get_parameters(parameter_file_path: str) -> Dict[str, str]:
     
     return parameters
 
-# Initialize the File to DF class
-file_DF_reader = File_to_DF()
-
 # Get the directory where the current Python script is located
 current_directory = os.path.dirname(os.path.abspath(__file__))
 
@@ -43,14 +40,14 @@ parameter_file_path = os.path.join(project_directory, 'Application_Setup', 'Setu
 
 parameters = get_parameters(parameter_file_path)
 
-# Convert CSV to DF
-csv_DF = file_DF_reader.read_csv_as_DF(parameters['CSV_FILE'])
-print('CSV DF: ', csv_DF)
+csv_df = read_csv(parameters['CSV_FILE'])
+#print('csv df: ', csv_df)
+print(csv_df.info)
 
-# Convert JSON to DF
-json_DF = file_DF_reader.read_json_as_DF(parameters['JSON_FILE'])
-print('JSON DF: ', csv_DF)
+json_df = read_json(parameters['JSON_FILE'])
+#print('json_df: ', json_df)
+print(json_df.info)
 
-# Convert XML to DF
-xml_DF = file_DF_reader.read_xml_as_DF(parameters['XML_FILE'])
-print('XML DF: ', csv_DF)
+xml_df = read_xml(parameters['XML_FILE'])
+#print('xml_df: ', xml_df)
+print(xml_df.info)
