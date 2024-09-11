@@ -1,6 +1,10 @@
 import os
-from file_to_dataframe import *
+from file_to_dataframe import read_csv, read_json, read_xml
+from full_refresh import dataframe_full_refresh
 from typing import List, Dict
+import mysql.connector
+from mysql.connector.connection import MySQLConnection
+from mysql.connector.cursor import MySQLCursor
 
 
 def get_parameters(parameter_file_path: str) -> Dict[str, str]:
@@ -41,13 +45,28 @@ parameter_file_path = os.path.join(project_directory, 'Application_Setup', 'Setu
 parameters = get_parameters(parameter_file_path)
 
 csv_df = read_csv(parameters['CSV_FILE'])
-#print('csv df: ', csv_df)
-print(csv_df.info)
 
 json_df = read_json(parameters['JSON_FILE'])
-#print('json_df: ', json_df)
-print(json_df.info)
 
 xml_df = read_xml(parameters['XML_FILE'])
-#print('xml_df: ', xml_df)
-print(xml_df.info)
+
+source_list = parameters['SOURCES_LIST'].split(',')
+
+# MySQL database configuration
+db_config = {
+    'user' : parameters['DB_USER'],
+    'password' : parameters['DB_PASSWORD'],
+    'host' : parameters['DB_HOST'],
+    'database' : parameters['DB_NAME']
+}
+
+connection = mysql.connector.connect(**db_config)
+cursor = connection.cursor()
+
+for source in source_list:
+    query = f"SELECT DISTINCT DATA_LOAD_STRATEGY FROM CSD_SOURCES WHERE UPPER(SOURCE_NAME) = UPPER('{source}')"
+    print(query)
+    cursor.execute(f"SELECT DISTINCT DATA_LOAD_STRATEGY FROM CSD_SOURCES WHERE UPPER(SOURCE_NAME) = UPPER('{source}')")
+    data_load_strategy_list = cursor.fetchone()
+    data_load_strategy = data_load_strategy_list[0]
+    print(f'Data load strategy for source [{source}] = {data_load_strategy}')
