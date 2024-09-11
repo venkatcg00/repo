@@ -82,7 +82,7 @@ def generate_random_record(
         "RECORD_ID" : record_id,
         "INTERACTION_ID" : interaction_id,
         "SUPPORT_CATEGORY" : random.choice(support_categories),
-        "AGENT_pseudo_NAME" : random.choice(agent_pseudo_names),
+        "AGENT_PSEUDO_NAME" : random.choice(agent_pseudo_names),
         "CONTACT_DATE" : (datetime.now() - timedelta(days = random.randint(0, 1000))).strftime('%d/%m/%Y %H:%M:%S'),
         "INTERACTION_STATUS" : random.choice(["COMPLETED", "DROPPED", "TRANSFERRED"]),
         "INTERACTION_TYPE" : random.choice(["CALL", "CHAT"]),
