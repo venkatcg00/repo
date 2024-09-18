@@ -1,4 +1,6 @@
 import pandas as pd
+from hashkey_generator import generate_md5
+
 
 def dataframe_full_refresh(dataframe, indentifier):
     """
@@ -17,5 +19,7 @@ def dataframe_full_refresh(dataframe, indentifier):
 
     # Drop duplicated based on the identifier, keeping the last occurence
     latest_df = sorted_df.drop_duplicated(subset=indentifier, keep = 'last')
+
+    latest_df['MD5_HASH'] = latest_df.apply(generate_md5, axis = 1)
 
     return latest_df

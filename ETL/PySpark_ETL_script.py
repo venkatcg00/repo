@@ -45,10 +45,13 @@ parameter_file_path = os.path.join(project_directory, 'Application_Setup', 'Setu
 parameters = get_parameters(parameter_file_path)
 
 csv_df = read_csv(parameters['CSV_FILE'])
+print(csv_df.info())
 
 json_df = read_json(parameters['JSON_FILE'])
+print(json_df.info())
 
 xml_df = read_xml(parameters['XML_FILE'])
+print(xml_df.info())
 
 source_list = parameters['SOURCES_LIST'].split(',')
 
@@ -65,7 +68,6 @@ cursor = connection.cursor()
 
 for source in source_list:
     query = f"SELECT DISTINCT DATA_LOAD_STRATEGY FROM CSD_SOURCES WHERE UPPER(SOURCE_NAME) = UPPER('{source}')"
-    print(query)
     cursor.execute(f"SELECT DISTINCT DATA_LOAD_STRATEGY FROM CSD_SOURCES WHERE UPPER(SOURCE_NAME) = UPPER('{source}')")
     data_load_strategy_list = cursor.fetchone()
     data_load_strategy = data_load_strategy_list[0]
