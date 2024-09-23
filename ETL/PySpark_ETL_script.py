@@ -1,6 +1,8 @@
 import os
 from file_to_dataframe import read_csv, read_json, read_xml
 from full_refresh import dataframe_full_refresh
+from full_refresh_timestamp import dataframe_full_refresh_timestamp
+from incremental_refresh_record_id import incremental_dataframe, get_last_loaded_record_id
 from typing import List, Dict
 import mysql.connector
 from mysql.connector.connection import MySQLConnection
@@ -67,8 +69,21 @@ connection = mysql.connector.connect(**db_config)
 cursor = connection.cursor()
 
 for source in source_list:
-    query = f"SELECT DISTINCT DATA_LOAD_STRATEGY FROM CSD_SOURCES WHERE UPPER(SOURCE_NAME) = UPPER('{source}')"
-    cursor.execute(f"SELECT DISTINCT DATA_LOAD_STRATEGY FROM CSD_SOURCES WHERE UPPER(SOURCE_NAME) = UPPER('{source}')")
-    data_load_strategy_list = cursor.fetchone()
-    data_load_strategy = data_load_strategy_list[0]
+    query = f"SELECT DISTINCT SOURCE_FILE_TYPE, DATA_LOAD_STRATEGY FROM CSD_SOURCES WHERE UPPER(SOURCE_NAME) = UPPER('{source}')"
+    cursor.execute(query)
+    result_config = cursor.fetchone()
+    source_file_type = result_config[0]
+    data_load_strategy = result_config[1]
     print(f'Data load strategy for source [{source}] = {data_load_strategy}')
+    if source_file_type == 'FLAT FILE - JSON':
+        dataframe = json_df
+    elif source_file_type == 'FLAT FILE - XML':
+        dataframe = xml_df
+    elif source_file_type == 'FLAT FILE - CSV':
+        dataframe = csv_df
+    
+    if data_load_strategy == 'INCREMENTAL - RECORD ID':
+        record_id = get_last_loaded_record_id(db_config, source)
+        refreshed_dataframe = incremental_dataframe(dataframe, 'RECORD_ID', record_id)
+    elif data_load_strategy == 'FULL REFRESH - TIMESTAMP':
+        refreshed_dataframe = dataframe_full_refresh_timestamp(dataframe)
