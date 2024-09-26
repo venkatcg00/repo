@@ -18,7 +18,7 @@ def dataframe_full_refresh(dataframe, indentifier):
     sorted_df = dataframe.sort_index()
 
     # Drop duplicated based on the identifier, keeping the last occurence
-    latest_df = sorted_df.drop_duplicated(subset=indentifier, keep = 'last')
+    latest_df = sorted_df.drop_duplicates(subset=indentifier, keep = 'last')
 
     latest_df['MD5_HASH'] = latest_df.apply(generate_md5, axis = 1)
 

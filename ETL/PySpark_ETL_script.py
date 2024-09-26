@@ -86,4 +86,8 @@ for source in source_list:
         record_id = get_last_loaded_record_id(db_config, source)
         refreshed_dataframe = incremental_dataframe(dataframe, 'RECORD_ID', record_id)
     elif data_load_strategy == 'FULL REFRESH - TIMESTAMP':
-        refreshed_dataframe = dataframe_full_refresh_timestamp(dataframe)
+        refreshed_dataframe = dataframe_full_refresh_timestamp(dataframe, 'SUPPORT_IDENTIFIER')
+    elif data_load_strategy == 'FULL REFRESH':
+        refreshed_dataframe = dataframe_full_refresh(dataframe, 'TICKET_IDENTIFIER')
+    
+    print('dataframe is ', refreshed_dataframe.info())
