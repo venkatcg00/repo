@@ -36,7 +36,7 @@ def fetch_allowed_values(cursor: MySQLCursor,
     Returns:
     List[str]: A list of allowed values from the specified column.
     """
-    query = f"SELECT DISTINCT {column_name} FROM {table_name} WHERE SOURCE_ID = (SELECT SOURCE_ID FROM CSD_SOURCES WHERE UPPER(SOURCE_NAME) = UPPER({source_name}))"
+    query = f"SELECT DISTINCT {column_name} FROM {table_name} WHERE SOURCE_ID = (SELECT SOURCE_ID FROM CSD_SOURCES WHERE UPPER(SOURCE_NAME) = UPPER({source_name})) AND ACTIVE_FLAG = 1"
     cursor.execute(query)
     return [str(row[0]) for row in cursor.fetchall()]
 
